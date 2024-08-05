@@ -113,6 +113,9 @@ RUN printf 'CREATE_MAIL_SPOOL=no' >> /etc/default/useradd \
     && useradd runner -g runner -d /home/runner \
     && chown runner:runner /home/runner /home/scripts
 
+# copy file extra_model_paths.yaml vào /home/storage/ComfyUI/
+COPY --chown=runner:runner extra_model_paths.yaml /home/runner/.config/ComfyUI/
+
 COPY --chown=runner:runner scripts/. /home/scripts/
 
 USER runner:runner

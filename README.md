@@ -15,3 +15,9 @@ docker run -it \
   pvbang/comfyui-docker:latest
 ```
 
+### Delete Docker
+```bash
+docker stop ...
+docker rm ...
+docker rmi pvbang/comfyui-docker:latest
+```

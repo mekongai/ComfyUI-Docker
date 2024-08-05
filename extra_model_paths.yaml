@@ -1,0 +1,16 @@
+comfyui:
+    checkpoints: /home/ubuntu/mekongai/saves/checkpoints/
+    clip: /home/ubuntu/mekongai/saves/clip/
+    clip_vision: /home/ubuntu/mekongai/saves/clip_vision/
+    configs: /home/ubuntu/mekongai/saves/configs/
+    controlnet: /home/ubuntu/mekongai/saves/controlnet/
+    embeddings: /home/ubuntu/mekongai/saves/embeddings/
+    loras: /home/ubuntu/mekongai/saves/loras/
+    upscale_models: /home/ubuntu/mekongai/saves/upscale_models
+    inpaint: /home/ubuntu/mekongai/saves/inpaint/
+    ipadapter: /home/ubuntu/mekongai/saves/ipadapter/
+    instantid: /home/ubuntu/mekongai/saves/controlnet/instantid/
+    insightface: /home/ubuntu/mekongai/saves/insightface/
+    antelopev2: /home/ubuntu/mekongai/saves/insightface/models/antelopev2/
+    vae: /home/ubuntu/mekongai/saves/vae/
+    unet: /home/ubuntu/mekongai/saves/unet/
