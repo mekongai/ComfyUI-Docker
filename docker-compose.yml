@@ -7,9 +7,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: "pvbang/comfyui-docker:latest-v1"
+    image: "pvbang/mekongai-comfyui-docker"
     user: "root"
-    volumes: 
+    volumes:
       - "./storage:/home/runner"
     command: "chown -R runner:runner /home/runner"
 
@@ -22,9 +22,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: "pvbang/comfyui-docker:latest-v1"
+    image: "pvbang/mekongai-comfyui-docker"
     ports:
       - "8188:8188"
+      - "3326:3326"
     volumes:
       - "./storage:/home/runner"
     environment:

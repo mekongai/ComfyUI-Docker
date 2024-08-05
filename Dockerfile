@@ -114,13 +114,18 @@ RUN printf 'CREATE_MAIL_SPOOL=no' >> /etc/default/useradd \
     && chown runner:runner /home/runner /home/scripts
 
 # copy file extra_model_paths.yaml vào /home/storage/ComfyUI/
-COPY --chown=runner:runner extra_model_paths.yaml /home/runner/.config/ComfyUI/
+#COPY --chown=runner:runner extra_model_paths.yaml /home/runner/.config/ComfyUI/
 
 COPY --chown=runner:runner scripts/. /home/scripts/
+
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
+COPY comfyui-1.pem.pub /root/.ssh/authorized_keys
+RUN chmod 600 /root/.ssh/authorized_keys
 
 USER runner:runner
 VOLUME /home/runner
 WORKDIR /home/runner
-EXPOSE 8188
+#EXPOSE 8188
+EXPOSE 3326
 ENV CLI_ARGS=""
 CMD ["bash","/home/scripts/entrypoint.sh"]
