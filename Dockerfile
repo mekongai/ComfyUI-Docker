@@ -1,19 +1,23 @@
 ################################################################################
 # Dockerfile that builds 'yanwk/comfyui-boot:cu121'
 # A runtime environment for https://github.com/comfyanonymous/ComfyUI
-# Using CUDA 12.1 & Python 3.11
+# Using CUDA 12.1& Python 3.11
 ################################################################################
 
 FROM opensuse/tumbleweed:latest
 
-LABEL maintainer="code@pvbang.fun"
+LABEL maintainer="code@yanwk.fun"
 
-# Install necessary packages including SSH server
+# Note: GCC for InsightFace;
+#       FFmpeg for video (pip[imageio-ffmpeg] will use system FFmpeg instead of bundled).
+# Note: CMake may use different version of Python. Using 'update-alternatives' to ensure default version.
 RUN --mount=type=cache,target=/var/cache/zypp \
-    zypper addrepo --check --refresh --priority 90 \
+    set -eu \
+    && zypper addrepo --check --refresh --priority 90 \
         'https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/Essentials/' packman-essentials \
-    && zypper --gpg-auto-import-keys install --no-confirm \
-        openssh openssh-server python311 python311-pip python311-wheel python311-setuptools \
+    && zypper --gpg-auto-import-keys \
+            install --no-confirm \
+        python311 python311-pip python311-wheel python311-setuptools \
         python311-devel python311-Cython gcc-c++ python311-py-build-cmake \
         python311-numpy python311-opencv \
         python311-ffmpeg-python ffmpeg x264 x265 \
@@ -24,18 +28,20 @@ RUN --mount=type=cache,target=/var/cache/zypp \
     && rm /usr/lib64/python3.11/EXTERNALLY-MANAGED \
     && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 100
 
-# Upgrade pip and install necessary Python packages
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --break-system-packages \
         --upgrade pip wheel setuptools
 
+# Install xFormers (stable version, will specify PyTorch version),
+# and Torchvision + Torchaudio (will downgrade to match xFormers' PyTorch version).
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --break-system-packages \
         xformers torchvision torchaudio \
         --index-url https://download.pytorch.org/whl/cu121 \
         --extra-index-url https://pypi.org/simple
 
-# Install additional dependencies for ComfyUI
+# Dependencies for frequently-used
+# (Do this firstly so PIP won't be solving too many deps at one time)
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --break-system-packages \
         -r https://raw.githubusercontent.com/comfyanonymous/ComfyUI/master/requirements.txt \
@@ -48,6 +54,11 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         -r https://raw.githubusercontent.com/ltdrdata/ComfyUI-Inspire-Pack/main/requirements.txt \
         -r https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/requirements.txt
 
+# Dependencies for more, with few hand-pick:
+# 'cupy-cuda12x' for Frame Interpolation
+# 'compel lark' for smZNodes
+# 'torchdiffeq' for DepthFM
+# 'fairscale' for APISR
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --break-system-packages \
         -r https://raw.githubusercontent.com/cubiq/ComfyUI_FaceAnalysis/main/requirements.txt \
@@ -63,7 +74,9 @@ RUN --mount=type=cache,target=/root/.cache/pip \
         compel lark torchdiffeq fairscale \
         python-ffmpeg
 
-# Fix ONNX Runtime "missing CUDA provider" and Mediapipe dependencies
+# 1. Fix ONNX Runtime "missing CUDA provider". Also add support for CUDA 12.1.
+#    Ref: https://onnxruntime.ai/docs/install/
+# 2. Fix MediaPipe's broken dep (protobuf<4).
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip uninstall --break-system-packages --yes \
         onnxruntime-gpu \
@@ -74,7 +87,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     && pip install --break-system-packages \
         mediapipe
 
-# Set library paths for CUDA and other dependencies
+# Fix for libs (.so files)
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}\
 :/usr/local/lib64/python3.11/site-packages/torch/lib\
 :/usr/local/lib/python3.11/site-packages/nvidia/cuda_cupti/lib\
@@ -82,6 +95,7 @@ ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}\
 :/usr/local/lib/python3.11/site-packages/nvidia/cudnn/lib\
 :/usr/local/lib/python3.11/site-packages/nvidia/cufft/lib"
 
+# More libs (not necessary, just in case)
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}\
 :/usr/local/lib/python3.11/site-packages/nvidia/cublas/lib\
 :/usr/local/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib\
@@ -92,26 +106,18 @@ ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}\
 :/usr/local/lib/python3.11/site-packages/nvidia/nvjitlink/lib\
 :/usr/local/lib/python3.11/site-packages/nvidia/nvtx/lib"
 
-# Create a low-privilege user and set up SSH
+# Create a low-privilege user
 RUN printf 'CREATE_MAIL_SPOOL=no' >> /etc/default/useradd \
-    && mkdir -p /home/runner /home/scripts /home/runner/.ssh \
+    && mkdir -p /home/runner /home/scripts \
     && groupadd runner \
     && useradd runner -g runner -d /home/runner \
-    && chown runner:runner /home/runner /home/scripts \
-    && chmod 700 /home/runner/.ssh
+    && chown runner:runner /home/runner /home/scripts
 
 COPY --chown=runner:runner scripts/. /home/scripts/
 
-USER root
-
-# Configure SSH server
-RUN mkdir -p /var/run/sshd && \
-    echo 'runner:password' | chpasswd && \
-    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config && \
-    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
-    sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
-    sed -i 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' /etc/pam.d/sshd && \
-    echo "export VISIBLE=now" >> /etc/profile
-
+USER runner:runner
+VOLUME /home/runner
+WORKDIR /home/runner
 EXPOSE 22 8188
-CMD ["/usr/sbin/sshd", "-D"]
+ENV CLI_ARGS=""
+CMD ["bash","/home/scripts/entrypoint.sh"]
