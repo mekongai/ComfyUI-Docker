@@ -1,33 +1,33 @@
 services:
-  # An old issue: docker-compose will mount volume as root.
-  # Workaround: https://github.com/docker/compose/issues/3270
-  # (Command 'docker run -v' is not affected)
+  # Service to fix volume permissions for each user
   file-chown:
     container_name: file-chown
     build:
       context: .
       dockerfile: Dockerfile
-    image: "pvbang/mekongai-comfyui-docker"
+    image: "pvbang/mekongai-comfyui"
     user: "root"
     volumes:
       - "./storage:/home/runner"
     command: "chown -R runner:runner /home/runner"
 
-  comfyui:
+  # Generate a service for each user with a specific GPU and ports
+  comfyui_user1:
     init: true
-    container_name: comfyui
+    container_name: comfyui_user1
     depends_on:
       file-chown:
         condition: service_completed_successfully
     build:
       context: .
       dockerfile: Dockerfile
-    image: "pvbang/mekongai-comfyui-docker"
+    image: "pvbang/mekongai-comfyui"
     ports:
-      - "8188:8188"
-      - "3326:3326"
+      - "5656:22"    # SSH port for user 1
+      - "8181:8188"  # App port for user 1
     volumes:
-      - "./storage:/home/runner"
+      - "./storage/user1/data:/home/runner/data"
+      - "./storage/user1/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
     environment:
       - CLI_ARGS=
     security_opt:
@@ -38,4 +38,200 @@ services:
           devices:
             - driver: nvidia
               device_ids: ['0']
+              capabilities: [gpu]
+
+  comfyui_user2:
+    init: true
+    container_name: comfyui_user2
+    depends_on:
+      file-chown:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pvbang/mekongai-comfyui"
+    ports:
+      - "5657:22"    # SSH port for user 2
+      - "8182:8188"  # App port for user 2
+    volumes:
+      - "./storage/user2/data:/home/runner/data"
+      - "./storage/user2/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
+    environment:
+      - CLI_ARGS=
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['1']
+              capabilities: [gpu]
+
+  comfyui_user3:
+    init: true
+    container_name: comfyui_user3
+    depends_on:
+      file-chown:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pvbang/mekongai-comfyui"
+    ports:
+      - "5658:22"    # SSH port for user 3
+      - "8183:8188"  # App port for user 3
+    volumes:
+      - "./storage/user3/data:/home/runner/data"
+      - "./storage/user3/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
+    environment:
+      - CLI_ARGS=
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['2']
+              capabilities: [gpu]
+
+  comfyui_user4:
+    init: true
+    container_name: comfyui_user4
+    depends_on:
+      file-chown:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pvbang/mekongai-comfyui"
+    ports:
+      - "5659:22"    # SSH port for user 4
+      - "8184:8188"  # App port for user 4
+    volumes:
+      - "./storage/user4/data:/home/runner/data"
+      - "./storage/user4/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
+    environment:
+      - CLI_ARGS=
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['3']
+              capabilities: [gpu]
+
+  comfyui_user5:
+    init: true
+    container_name: comfyui_user5
+    depends_on:
+      file-chown:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pvbang/mekongai-comfyui"
+    ports:
+      - "5660:22"    # SSH port for user 5
+      - "8185:8188"  # App port for user 5
+    volumes:
+      - "./storage/user5/data:/home/runner/data"
+      - "./storage/user5/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
+    environment:
+      - CLI_ARGS=
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['4']
+              capabilities: [gpu]
+
+  comfyui_user6:
+    init: true
+    container_name: comfyui_user6
+    depends_on:
+      file-chown:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pvbang/mekongai-comfyui"
+    ports:
+      - "5661:22"    # SSH port for user 6
+      - "8186:8188"  # App port for user 6
+    volumes:
+      - "./storage/user6/data:/home/runner/data"
+      - "./storage/user6/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
+    environment:
+      - CLI_ARGS=
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['5']
+              capabilities: [gpu]
+
+  comfyui_user7:
+    init: true
+    container_name: comfyui_user7
+    depends_on:
+      file-chown:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pvbang/mekongai-comfyui"
+    ports:
+      - "5662:22"    # SSH port for user 7
+      - "8187:8188"  # App port for user 7
+    volumes:
+      - "./storage/user7/data:/home/runner/data"
+      - "./storage/user7/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
+    environment:
+      - CLI_ARGS=
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['6']
+              capabilities: [gpu]
+
+  comfyui_user8:
+    init: true
+    container_name: comfyui_user8
+    depends_on:
+      file-chown:
+        condition: service_completed_successfully
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "pvbang/mekongai-comfyui"
+    ports:
+      - "5663:22"    # SSH port for user 8
+      - "8188:8188"  # App port for user 8
+    volumes:
+      - "./storage/user8/data:/home/runner/data"
+      - "./storage/user8/ssh/authorized_keys:/home/runner/.ssh/authorized_keys:ro"
+    environment:
+      - CLI_ARGS=
+    security_opt:
+      - "label=type:nvidia_container_t"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['7']
               capabilities: [gpu]
