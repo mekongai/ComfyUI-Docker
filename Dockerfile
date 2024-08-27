@@ -6,7 +6,7 @@
 
 FROM opensuse/tumbleweed:latest
 
-LABEL maintainer="code@yanwk.fun"
+LABEL maintainer="code@pvbang.fun"
 
 # Note: GCC for InsightFace;
 #       FFmpeg for video (pip[imageio-ffmpeg] will use system FFmpeg instead of bundled).
@@ -118,6 +118,6 @@ COPY --chown=runner:runner scripts/. /home/scripts/
 USER runner:runner
 VOLUME /home/runner
 WORKDIR /home/runner
-EXPOSE 22 8188
+EXPOSE 7861
 ENV CLI_ARGS=""
 CMD ["bash","/home/scripts/entrypoint.sh"]
